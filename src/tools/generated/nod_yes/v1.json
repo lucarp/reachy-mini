@@ -1,0 +1,11 @@
+{
+  "name": "nod_yes",
+  "version": 1,
+  "source": "generated",
+  "created_at": "",
+  "author": "code_agent",
+  "description": "Make the robot nod 'yes' by moving its head up and down",
+  "validation_passed": true,
+  "test_passed": false,
+  "test_results": null
+}
