@@ -1,6 +1,83 @@
-# Reachy Mini Simulation & LLM Integration
+# Reachy Mini Agentic AI
 
-Interactive demos for Reachy Mini robot in MuJoCo simulation, including LLM integration with Ollama.
+**PhD Research Project: Agentic AI with Deep Reinforcement Learning & Human-in-the-Loop**
+
+This repository contains a multi-phase project for developing an advanced agentic AI system for the Reachy Mini robot, with real-time multimodal capabilities (vision, speech, movement) and eventual self-improvement through Deep Reinforcement Learning with human feedback.
+
+## 🎯 Project Phases
+
+### ✅ Phase 1: Multimodal Agentic AI (COMPLETED)
+
+**Real-time vision, speech, and natural language interaction with OpenAI Agents SDK**
+
+- Multi-agent system (Coordinator, Robot Control, Vision)
+- Ollama + LiteLLM integration (Gemma 3 27B)
+- WhisperX speech-to-text (70x realtime)
+- Piper TTS with streaming
+- FastAPI with WebSocket for real-time communication
+- 10+ robot control and vision tools
+
+👉 **[See PHASE1_README.md for complete documentation](PHASE1_README.md)**
+
+### 🔨 Phase 2: Self-Coding Agent (In Development)
+
+- Autonomous tool generation
+- Code testing and validation
+- Safety guardrails
+- Dynamic tool registration
+
+### 🚀 Phase 3: DRL with Human-in-the-Loop (Planned)
+
+- Natural language feedback
+- Demonstration learning
+- Reward model training
+- PPO-based policy optimization
+
+📋 **[See PROJECT_SPEC.md for full project specification](PROJECT_SPEC.md)**
+
+---
+
+## 🚀 Quick Start - Phase 1 API
+
+### 1. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+python3 -m piper.download_voices en_US-lessac-medium
+```
+
+### 2. Configure Environment
+
+```bash
+cp .env.example .env
+# Edit .env with your paths and settings
+```
+
+### 3. Start the Reachy Daemon
+
+```bash
+mjpython -m reachy_mini.daemon.app.main --sim --scene minimal
+```
+
+### 4. Start the API Server
+
+```bash
+python -m src.main
+```
+
+### 5. Test the System
+
+```bash
+python test_api.py
+```
+
+**API Documentation:** http://localhost:8000/docs
+
+---
+
+## 📚 Early Demos (Before Phase 1)
+
+Interactive demos for Reachy Mini robot in MuJoCo simulation, including basic LLM integration with Ollama.
 
 ## Quick Start
 
@@ -75,34 +152,60 @@ python gemma_vision_demo.py
 
 See **[GEMMA_VISION_README.md](GEMMA_VISION_README.md)** for detailed vision guide.
 
-## Documentation
+## 📖 Documentation
 
+### Phase 1 (Current)
+- **[PHASE1_README.md](PHASE1_README.md)** - Complete Phase 1 documentation
+- **[PROJECT_SPEC.md](PROJECT_SPEC.md)** - Full 3-phase project specification
+
+### Early Development Docs
 - **[DEMO_GUIDE.md](DEMO_GUIDE.md)** - Complete SDK and REST API reference
 - **[LLM_INTEGRATION_GUIDE.md](LLM_INTEGRATION_GUIDE.md)** - Detailed LLM integration guide
+- **[GEMMA_VISION_README.md](GEMMA_VISION_README.md)** - Gemma 3 vision guide
 
-## File Structure
+## 📂 File Structure
 
 ```
-.
+reachy-mini/
 ├── README.md                      # This file
-├── DEMO_GUIDE.md                  # Complete SDK reference
-├── LLM_INTEGRATION_GUIDE.md       # LLM integration guide
-├── GEMMA_VISION_README.md         # Gemma 3 vision guide
+├── PHASE1_README.md               # Phase 1 complete documentation
+├── PROJECT_SPEC.md                # Full 3-phase project spec
+├── config.yaml                    # Main configuration
+├── .env.example                   # Environment variables template
+├── requirements.txt               # Python dependencies
+├── test_api.py                    # Phase 1 API test script
 │
-├── test_simulation.py             # Basic movement test
-├── demo_antennas.py               # Antenna expressions
-├── demo_combined.py               # Combined head + antenna behaviors
-├── demo_camera.py                 # Camera feed demo
-├── demo_choreography.py           # Advanced choreographed movements
+├── src/                           # Phase 1 source code
+│   ├── agents/                    # Agent definitions
+│   │   ├── coordinator.py         # Main coordinator agent
+│   │   ├── robot_agent.py         # Robot control specialist
+│   │   ├── vision_agent.py        # Vision analysis specialist
+│   │   └── runner.py              # Agent execution runner
+│   ├── tools/                     # Function tools
+│   │   ├── robot_tools.py         # Robot control tools
+│   │   └── vision_tools.py        # Vision analysis tools
+│   ├── api/                       # FastAPI application
+│   │   ├── main.py                # API server
+│   │   └── routes/                # API endpoints
+│   ├── multimodal/                # Speech & audio
+│   │   ├── speech_to_text.py      # WhisperX integration
+│   │   └── text_to_speech.py      # Piper TTS integration
+│   ├── utils/                     # Utilities
+│   │   ├── config.py              # Configuration management
+│   │   └── session.py             # Session management
+│   └── main.py                    # Entry point
 │
-├── llm_quick_test.py              # Quick LLM integration test
-├── llm_text_interaction.py        # Automated LLM conversation examples
-├── llm_interactive_chat.py        # Real-time interactive chat
-├── llm_vision_interaction.py      # Vision + LLM integration (LLaVA)
+├── docs/                          # Technical documentation
+│   ├── openai-agent-sdk.md        # OpenAI Agents SDK reference
+│   ├── whisperX.md                # WhisperX documentation
+│   ├── piper.md                   # Piper TTS documentation
+│   └── ...                        # Other tech docs
 │
-├── gemma_vision_simple.py         # Quick Gemma vision test
-├── gemma_vision_interactive.py    # Interactive Q&A with Gemma vision
-└── gemma_vision_demo.py           # Comprehensive Gemma vision demo
+└── [Early demos]                  # Initial exploration demos
+    ├── test_simulation.py
+    ├── demo_*.py
+    ├── llm_*.py
+    └── gemma_vision_*.py
 ```
 
 ## Features Demonstrated

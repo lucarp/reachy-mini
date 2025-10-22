@@ -1,0 +1,43 @@
+# Phase 1 Dependencies - Reachy Mini Agentic AI
+
+# Core Agent Framework
+openai-agents>=0.1.0
+litellm>=1.30.0
+
+# Robotics
+reachy-mini>=0.3.0
+
+# Multimodal AI
+whisperx>=3.1.1
+piper-tts>=1.2.0
+
+# Vision
+opencv-python>=4.8.0
+pillow>=10.0.0
+
+# API Framework
+fastapi[all]>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+
+# Data Validation
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Utilities
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+requests>=2.31.0
+
+# Audio Processing
+numpy>=1.24.0
+sounddevice>=0.4.6
+
+# Database (for sessions)
+aiosqlite>=0.19.0
+
+# Development
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+ruff>=0.1.0

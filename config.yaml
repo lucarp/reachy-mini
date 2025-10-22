@@ -1,0 +1,94 @@
+# Reachy Mini Agentic AI - Phase 1 Configuration
+
+# LLM Configuration
+llm:
+  provider: ollama
+  base_url: ${OLLAMA_BASE_URL:-http://localhost:11434}
+  model: ${OLLAMA_MODEL:-gemma3:27b}
+  temperature: 0.7
+  max_tokens: 1024
+  timeout: 30
+
+# Speech-to-Text (WhisperX)
+speech_to_text:
+  model: ${WHISPERX_MODEL:-base}
+  device: ${WHISPERX_DEVICE:-cpu}
+  compute_type: ${WHISPERX_COMPUTE_TYPE:-int8}
+  batch_size: 1  # Low latency
+  language: en
+  vad_filter: true
+
+# Text-to-Speech (Piper)
+text_to_speech:
+  voice: ${PIPER_VOICE:-en_US-lessac-medium}
+  voice_path: ${PIPER_VOICE_PATH}
+  sample_rate: 22050
+  streaming: true
+  synthesis_config:
+    volume: 1.0
+    length_scale: 1.0
+    noise_scale: 0.667
+    noise_w_scale: 0.8
+
+# Robot Configuration
+robot:
+  simulation: ${ROBOT_SIMULATION:-true}
+  scene: ${ROBOT_SCENE:-minimal}
+  camera:
+    width: 640
+    height: 480
+    fps: 30
+  safety:
+    max_head_speed: 50  # degrees/second
+    collision_check: true
+    workspace_limits:
+      pitch: [-45, 45]
+      yaw: [-90, 90]
+      roll: [-30, 30]
+
+# Agent Configuration
+agents:
+  coordinator:
+    name: "ReachyCoordinator"
+    instructions: |
+      You are a friendly assistant controlling the Reachy Mini robot.
+      You can see through the robot's camera, move its head, control its antennas,
+      and interact naturally with users through voice.
+
+      Always confirm understanding before executing physical actions.
+      Be concise and natural in your responses.
+
+  robot_control:
+    name: "RobotControl"
+    instructions: |
+      You are specialized in controlling the Reachy Mini robot's physical movements.
+      Execute movement commands safely and report the results accurately.
+
+  vision:
+    name: "VisionAnalyst"
+    instructions: |
+      You are specialized in analyzing what the Reachy Mini robot sees.
+      Provide detailed, accurate descriptions of visual scenes.
+
+# API Configuration
+api:
+  host: ${API_HOST:-0.0.0.0}
+  port: ${API_PORT:-8000}
+  cors_origins:
+    - http://localhost:3000
+    - http://localhost:8000
+  websocket:
+    ping_interval: 30
+    ping_timeout: 10
+
+# Session Configuration
+session:
+  db_path: ${SESSION_DB_PATH:-./data/sessions.db}
+  max_history: 50
+  cleanup_after_days: 7
+
+# Logging
+logging:
+  level: ${LOG_LEVEL:-INFO}
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: ./logs/reachy_agent.log
