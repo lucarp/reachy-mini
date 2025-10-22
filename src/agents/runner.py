@@ -2,7 +2,7 @@
 
 import logging
 from typing import Dict, Any, Optional, List
-from agents import Agent, Runner, Handoff
+from agents import Agent, Runner
 from ..utils.config import Config
 from ..utils.session import SessionManager
 from .coordinator import create_coordinator_agent
@@ -28,12 +28,6 @@ class ReachyAgentRunner:
         # Create agents
         self.coordinator, self.robot_agent, self.vision_agent = self._create_agents()
 
-        # Create runner
-        self.runner = Runner(
-            starting_agent=self.coordinator,
-            agents=[self.coordinator, self.robot_agent, self.vision_agent],
-        )
-
         logger.info("ReachyAgentRunner initialized")
 
     def _create_agents(self) -> tuple[Agent, Agent, Agent]:
@@ -42,27 +36,26 @@ class ReachyAgentRunner:
         Returns:
             Tuple of (coordinator, robot_agent, vision_agent)
         """
-        # Create handoff placeholders
-        coordinator_handoff = Handoff(target_name="ReachyCoordinator")
-        robot_handoff = Handoff(target_name="RobotControl")
-        vision_handoff = Handoff(target_name="VisionAnalyst")
-
-        # Create specialist agents
+        # Create specialist agents first (without handoff back yet)
         robot_agent = create_robot_agent(
             config=self.config,
-            handoff_back=coordinator_handoff,
+            handoff_back=None,  # Will be set after coordinator is created
         )
 
         vision_agent = create_vision_agent(
             config=self.config,
-            handoff_back=coordinator_handoff,
+            handoff_back=None,  # Will be set after coordinator is created
         )
 
         # Create coordinator with handoffs to specialists
         coordinator = create_coordinator_agent(
             config=self.config,
-            handoffs=[robot_handoff, vision_handoff],
+            handoffs=[robot_agent, vision_agent],
         )
+
+        # Note: In OpenAI Agents SDK, handoffs work automatically
+        # The specialist agents can naturally complete and return control
+        # No explicit "handoff back" is needed
 
         return coordinator, robot_agent, vision_agent
 
@@ -91,24 +84,15 @@ class ReachyAgentRunner:
                 content=message,
             )
 
-            # Get conversation history
-            history = self.session_manager.get_history(
-                session_id=session_id,
-                max_messages=self.config.session.max_history,
+            # Run agent using Runner.run() static method
+            result = await Runner.run(
+                starting_agent=self.coordinator,
+                input=message,
+                max_turns=10,
             )
 
-            # Format history for agent
-            messages = [
-                {"role": msg["role"], "content": msg["content"]}
-                for msg in history
-            ]
-
-            # Run agent
-            response = await self.runner.run(messages=messages)
-
             # Extract final response
-            final_message = response.messages[-1].content if response.messages else ""
-            final_agent = response.messages[-1].agent if response.messages else self.coordinator.name
+            final_message = result.final_output if hasattr(result, 'final_output') else str(result)
 
             # Add assistant response to history
             self.session_manager.add_message(
@@ -116,17 +100,15 @@ class ReachyAgentRunner:
                 role="assistant",
                 content=final_message,
                 metadata={
-                    "agent": final_agent,
-                    "message_count": len(response.messages),
+                    "agent": self.coordinator.name,
                 },
             )
 
             return {
                 "status": "success",
                 "response": final_message,
-                "agent": final_agent,
+                "agent": self.coordinator.name,
                 "session_id": session_id,
-                "message_count": len(response.messages),
             }
 
         except Exception as e:
@@ -162,29 +144,21 @@ class ReachyAgentRunner:
                 content=message,
             )
 
-            # Get history
-            history = self.session_manager.get_history(
-                session_id=session_id,
-                max_messages=self.config.session.max_history,
-            )
-
-            messages = [
-                {"role": msg["role"], "content": msg["content"]}
-                for msg in history
-            ]
-
-            # Stream response
+            # Stream response using Runner.run_streamed()
             full_response = ""
-            final_agent = self.coordinator.name
 
-            async for chunk in self.runner.stream(messages=messages):
-                if hasattr(chunk, "content") and chunk.content:
-                    full_response += chunk.content
-                    final_agent = chunk.agent if hasattr(chunk, "agent") else final_agent
+            async for event in Runner.run_streamed(
+                starting_agent=self.coordinator,
+                input=message,
+                max_turns=10,
+            ):
+                # Handle different event types
+                if hasattr(event, 'content') and event.content:
+                    full_response += event.content
                     yield {
                         "type": "chunk",
-                        "content": chunk.content,
-                        "agent": final_agent,
+                        "content": event.content,
+                        "agent": self.coordinator.name,
                     }
 
             # Add full response to history
@@ -193,7 +167,7 @@ class ReachyAgentRunner:
                     session_id=session_id,
                     role="assistant",
                     content=full_response,
-                    metadata={"agent": final_agent},
+                    metadata={"agent": self.coordinator.name},
                 )
 
             yield {

@@ -1,8 +1,8 @@
 """Vision analysis specialist agent."""
 
 import logging
-from typing import List
-from agents import Agent, Handoff
+from typing import List, Optional
+from agents import Agent
 from agents.extensions.models.litellm_model import LitellmModel
 from ..utils.config import Config
 from ..tools.vision_tools import (
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def create_vision_agent(
     config: Config,
-    handoff_back: Handoff,
+    handoff_back: Optional[Agent] = None,
 ) -> Agent:
     """Create the vision analysis specialist agent.
 
@@ -36,10 +36,7 @@ def create_vision_agent(
     """
     model = LitellmModel(
         model=f"ollama/{config.llm.model}",
-        api_base=config.llm.base_url,
-        temperature=0.7,
-        max_tokens=config.llm.max_tokens,
-        timeout=config.llm.timeout,
+        base_url=config.llm.base_url,
     )
 
     # Vision tools
@@ -50,12 +47,15 @@ def create_vision_agent(
         describe_view,
     ]
 
+    # Build handoffs list (if handoff_back is provided)
+    handoffs = [handoff_back] if handoff_back else []
+
     agent = Agent(
         name=config.agents.vision.name,
         model=model,
         instructions=config.agents.vision.instructions,
         tools=tools,
-        handoffs=[handoff_back],
+        handoffs=handoffs,
     )
 
     logger.info(f"Created vision agent: {agent.name} with {len(tools)} tools")

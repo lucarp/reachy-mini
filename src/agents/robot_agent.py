@@ -1,8 +1,8 @@
 """Robot control specialist agent."""
 
 import logging
-from typing import List
-from agents import Agent, Handoff
+from typing import List, Optional
+from agents import Agent
 from agents.extensions.models.litellm_model import LitellmModel
 from ..utils.config import Config
 from ..tools.robot_tools import (
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def create_robot_agent(
     config: Config,
-    handoff_back: Handoff,
+    handoff_back: Optional[Agent] = None,
 ) -> Agent:
     """Create the robot control specialist agent.
 
@@ -37,10 +37,7 @@ def create_robot_agent(
     """
     model = LitellmModel(
         model=f"ollama/{config.llm.model}",
-        api_base=config.llm.base_url,
-        temperature=0.5,  # Lower temperature for precise control
-        max_tokens=config.llm.max_tokens,
-        timeout=config.llm.timeout,
+        base_url=config.llm.base_url,
     )
 
     # Robot control tools
@@ -52,12 +49,15 @@ def create_robot_agent(
         express_emotion,
     ]
 
+    # Build handoffs list (if handoff_back is provided)
+    handoffs = [handoff_back] if handoff_back else []
+
     agent = Agent(
         name=config.agents.robot_control.name,
         model=model,
         instructions=config.agents.robot_control.instructions,
         tools=tools,
-        handoffs=[handoff_back],
+        handoffs=handoffs,
     )
 
     logger.info(f"Created robot agent: {agent.name} with {len(tools)} tools")

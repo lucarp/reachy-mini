@@ -33,10 +33,7 @@ def create_coordinator_agent(
     # Create LiteLLM model for Ollama
     model = LitellmModel(
         model=f"ollama/{config.llm.model}",
-        api_base=config.llm.base_url,
-        temperature=config.llm.temperature,
-        max_tokens=config.llm.max_tokens,
-        timeout=config.llm.timeout,
+        base_url=config.llm.base_url,
     )
 
     agent = Agent(
