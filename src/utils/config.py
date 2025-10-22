@@ -94,6 +94,7 @@ class AgentsConfig(BaseModel):
     coordinator: AgentConfig
     robot_control: AgentConfig
     vision: AgentConfig
+    code_generation: AgentConfig
 
 
 class WebSocketConfig(BaseModel):

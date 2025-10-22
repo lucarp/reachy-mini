@@ -1,6 +1,7 @@
 """Agent runner for executing conversations with session management."""
 
 import logging
+from pathlib import Path
 from typing import Dict, Any, Optional, List
 from agents import Agent, Runner
 from ..utils.config import Config
@@ -8,6 +9,10 @@ from ..utils.session import SessionManager
 from .coordinator import create_coordinator_agent
 from .robot_agent import create_robot_agent
 from .vision_agent import create_vision_agent
+from .code_agent import create_code_agent, CodeGenerationPipeline
+from ..validation.tool_validator import ToolValidator
+from ..validation.tool_tester import ToolTester
+from ..validation.tool_registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -25,17 +30,31 @@ class ReachyAgentRunner:
         self.config = config
         self.session_manager = session_manager
 
-        # Create agents
-        self.coordinator, self.robot_agent, self.vision_agent = self._create_agents()
+        # Create agents (including Phase 2 code agent)
+        self.coordinator, self.robot_agent, self.vision_agent, self.code_agent = self._create_agents()
 
-        logger.info("ReachyAgentRunner initialized")
+        logger.info("ReachyAgentRunner initialized with Phase 2 code generation")
 
-    def _create_agents(self) -> tuple[Agent, Agent, Agent]:
+    def _create_agents(self) -> tuple[Agent, Agent, Agent, Agent]:
         """Create all agents with proper handoffs.
 
         Returns:
-            Tuple of (coordinator, robot_agent, vision_agent)
+            Tuple of (coordinator, robot_agent, vision_agent, code_agent)
         """
+        # Initialize Phase 2 components
+        logger.info("Initializing Phase 2 validation pipeline...")
+
+        # Tool storage (use project root / src / tools)
+        tools_storage = Path(__file__).parent.parent / "tools"
+
+        validator = ToolValidator(strict_mode=True)
+        tester = ToolTester(default_timeout=10.0)
+        registry = ToolRegistry(tools_storage)
+
+        pipeline = CodeGenerationPipeline(validator, tester, registry)
+
+        logger.info(f"Phase 2 pipeline initialized (storage: {tools_storage})")
+
         # Create specialist agents first (without handoff back yet)
         robot_agent = create_robot_agent(
             config=self.config,
@@ -47,17 +66,23 @@ class ReachyAgentRunner:
             handoff_back=None,  # Will be set after coordinator is created
         )
 
-        # Create coordinator with handoffs to specialists
+        code_agent = create_code_agent(
+            config=self.config,
+            pipeline=pipeline,
+            handoff_back=None,  # Will be set after coordinator is created
+        )
+
+        # Create coordinator with handoffs to all specialists
         coordinator = create_coordinator_agent(
             config=self.config,
-            handoffs=[robot_agent, vision_agent],
+            handoffs=[robot_agent, vision_agent, code_agent],
         )
 
         # Note: In OpenAI Agents SDK, handoffs work automatically
         # The specialist agents can naturally complete and return control
         # No explicit "handoff back" is needed
 
-        return coordinator, robot_agent, vision_agent
+        return coordinator, robot_agent, vision_agent, code_agent
 
     async def process_message(
         self,
